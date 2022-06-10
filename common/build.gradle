@@ -1,0 +1,11 @@
+plugins {
+    id 'java-library'
+}
+
+dependencies {
+    api project(':api')
+
+    implementation 'net.kyori:adventure-text-serializer-gson:+'
+    implementation 'com.google.code.gson:gson:+'
+    implementation 'org.hibernate:hibernate-core:+'
+}

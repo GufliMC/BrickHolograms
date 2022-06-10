@@ -1,0 +1,15 @@
+plugins {
+    id 'java-library'
+}
+
+repositories {
+    maven { url 'https://jitpack.io' }
+}
+
+
+dependencies {
+    api project(':api')
+
+    // provided by platform
+    compileOnly 'com.github.Minestom:Minestom:f80f653ee0'
+}

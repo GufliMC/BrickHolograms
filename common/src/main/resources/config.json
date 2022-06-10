@@ -1,0 +1,8 @@
+{
+  "database": {
+    "dsn": "jdbc:h2:file:./extensions/BrickHolograms/data/database.h2",
+    "driver": "com.mysql.jdbc.Driver",
+    "username": "dbuser",
+    "password": "dbuser"
+  }
+}

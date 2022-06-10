@@ -1,0 +1,50 @@
+plugins {
+    id 'com.guflimc.minestom.extensionsetup' version '+'
+}
+
+repositories {
+    maven { url 'https://jitpack.io' }
+}
+
+dependencies {
+    // provided by platform
+    compileOnly 'com.github.Minestom:Minestom:f80f653ee0'
+    implementation 'com.google.code.gson:gson:2.+'
+
+    // provided by extensions
+    compileOnly 'com.guflimc.brick.i18n:minestom-api:+'
+
+    // external library
+    library 'org.apache.commons:commons-lang3:3.12.0'
+    library 'org.hibernate:hibernate-core:+'
+    library 'mysql:mysql-connector-java:5.+'
+    library 'net.kyori:adventure-text-minimessage:4.+'
+
+    // shadow
+    implementation (project(':common')) {
+        exclude group: 'com.guflimc.brick.i18n'
+    }
+    implementation project(':minestom-api')
+
+    implementation 'cloud.commandframework:cloud-core:+'
+    implementation 'cloud.commandframework:cloud-annotations:+'
+    implementation 'com.guflimc.cloud:cloud-minestom:+'
+}
+
+
+minestomExtension {
+    name = rootProject.name
+    entrypoint = "com.guflimc.brick.holograms.minestom.MinestomBrickHolograms"
+    dependencies = ["BrickI18n", "BrickPlaceholders"]
+}
+
+shadowJar.doLast {
+    copy {
+        from "build/libs/" + archiveFileName.get()
+        into 'D:\\Documents\\testservers\\WollyMC\\lobby2\\extensions'
+    }
+}
+
+//
+//println project.configurations.runtimeClasspath.getResolvedConfiguration().getLenientConfiguration()
+//        .getArtifacts().stream().map(art -> art.moduleVersion.id).toList()
