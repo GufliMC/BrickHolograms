@@ -1,0 +1,1 @@
+typeSearchIndex = [{"l":"All Classes and Interfaces","u":"allclasses-index.html"},{"p":"com.guflimc.brick.holograms.api.domain","l":"Hologram"},{"p":"com.guflimc.brick.holograms.api","l":"HologramAPI"},{"p":"com.guflimc.brick.holograms.api","l":"HologramManager"},{"p":"com.guflimc.brick.holograms.api.meta","l":"Position"}];updateSearchResults();
