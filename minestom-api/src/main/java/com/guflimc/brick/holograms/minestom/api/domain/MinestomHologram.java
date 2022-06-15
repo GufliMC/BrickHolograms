@@ -7,6 +7,8 @@ public interface MinestomHologram extends Hologram {
 
     void setInstance(Instance instance);
 
+    Instance instance();
+
     void remove();
 
 }

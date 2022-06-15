@@ -4,15 +4,17 @@ import cloud.commandframework.annotations.AnnotationParser;
 import cloud.commandframework.execution.CommandExecutionCoordinator;
 import cloud.commandframework.meta.SimpleCommandMeta;
 import com.google.gson.Gson;
-import com.guflimc.brick.holograms.api.domain.MultiLineTextHologram;
+import com.guflimc.brick.holograms.api.domain.Hologram;
 import com.guflimc.brick.holograms.common.BrickDatabaseContext;
 import com.guflimc.brick.holograms.common.BrickHologramsConfig;
+import com.guflimc.brick.holograms.common.command.HologramArgument;
+import com.guflimc.brick.holograms.common.command.HologramCommands;
 import com.guflimc.brick.holograms.minestom.api.MinestomHologramAPI;
 import com.guflimc.brick.holograms.minestom.commands.MinestomHologramCommands;
 import com.guflimc.brick.i18n.minestom.api.MinestomI18nAPI;
 import com.guflimc.brick.i18n.minestom.api.namespace.MinestomNamespace;
 import com.guflimc.cloud.minestom.MinestomCommandManager;
-import net.kyori.adventure.text.Component;
+import io.leangen.geantyref.TypeToken;
 import net.minestom.server.command.CommandSender;
 import net.minestom.server.extensions.Extension;
 
@@ -49,7 +51,7 @@ public class MinestomBrickHolograms extends Extension {
         databaseContext = new BrickDatabaseContext(config.database);
 
         MinestomBrickHologramManager manager = new MinestomBrickHologramManager(databaseContext);
-        MinestomHologramAPI.registerManager(manager);
+        MinestomHologramAPI.setHologramManager(manager);
 
         // TRANSLATIONS
         MinestomNamespace namespace = new MinestomNamespace(this, Locale.ENGLISH);
@@ -63,8 +65,8 @@ public class MinestomBrickHolograms extends Extension {
                 Function.identity()
         );
 
-//        commandManager.getParserRegistry().registerParserSupplier(TypeToken.get(PersistentCreature.class), parserParameters ->
-//                new PersistentCreatureArgument.CreatureParser<>());
+        commandManager.parserRegistry().registerParserSupplier(TypeToken.get(Hologram.class), parserParameters ->
+                new HologramArgument.HologramParser<>());
 
         AnnotationParser<CommandSender> annotationParser = new AnnotationParser<>(
                 commandManager,
@@ -72,6 +74,7 @@ public class MinestomBrickHolograms extends Extension {
                 parameters -> SimpleCommandMeta.empty()
         );
 
+        annotationParser.parse(new HologramCommands(manager));
         annotationParser.parse(new MinestomHologramCommands(manager));
 
         getLogger().info("Enabled " + nameAndVersion() + ".");
@@ -87,9 +90,4 @@ public class MinestomBrickHolograms extends Extension {
         return getOrigin().getName() + " v" + getOrigin().getVersion();
     }
 
-
-    public static void main(String[] args) {
-        MultiLineTextHologram hologram = MinestomHologramAPI.get().create();
-        hologram.addLine(Component.text("hey"));
-    }
 }

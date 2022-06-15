@@ -1,22 +1,21 @@
 package com.guflimc.brick.holograms.api;
 
 import com.guflimc.brick.holograms.api.domain.Hologram;
-import com.guflimc.brick.holograms.api.domain.MultiLineTextHologram;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.Collection;
 import java.util.Optional;
 import java.util.concurrent.CompletableFuture;
 
-public interface HologramManager {
+public interface HologramManager<T extends Hologram> {
 
-    Collection<Hologram> holograms();
+    Collection<T> holograms();
 
-    Optional<Hologram> find(String name);
+    Optional<T> find(String name);
 
-    MultiLineTextHologram create();
+    Hologram create();
 
-    MultiLineTextHologram create(@NotNull String name);
+    Hologram create(@NotNull String name);
 
 
     CompletableFuture<Void> persist(@NotNull Hologram hologram);
