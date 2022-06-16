@@ -8,8 +8,7 @@ repositories {
 
 dependencies {
     // provided by platform
-    compileOnly 'com.github.Minestom:Minestom:f80f653ee0'
-    implementation 'com.google.code.gson:gson:2.+'
+    compileOnly 'com.github.Minestom:Minestom:-SNAPSHOT'
 
     // provided by extensions
     compileOnly 'com.guflimc.brick.i18n:minestom-api:+'
@@ -17,26 +16,38 @@ dependencies {
     compileOnly 'com.guflimc.brick.placeholders:minestom-api:+'
 
     // external library
+    library 'com.google.code.gson:gson:+'
     library 'org.apache.commons:commons-lang3:3.12.0'
     library 'org.hibernate:hibernate-core:+'
     library 'mysql:mysql-connector-java:5.+'
     library 'net.kyori:adventure-text-minimessage:4.+'
+    library 'cloud.commandframework:cloud-core:+'
+    library 'cloud.commandframework:cloud-annotations:+'
 
     // shadow
     implementation (project(':common')) {
         exclude group: 'com.guflimc.brick.i18n'
+        exclude group: 'com.guflimc.brick.orm'
+        exclude group: 'cloud.commandframework'
+        exclude group: 'net.kyori'
+        exclude group: 'com.google.code.gson'
     }
-    implementation project(':minestom-api')
+    implementation (project(':minestom-api')) {
+        exclude group: 'net.kyori'
+    }
 
-    implementation 'com.guflimc.cloud:cloud-minestom:+'
-
-    implementation 'cloud.commandframework:cloud-core:+'
-    implementation 'cloud.commandframework:cloud-annotations:+'
+    // must be shadowed, do not work when used in the library
+    implementation ('com.guflimc.brick.orm:common:+') {
+        exclude group: 'org.hibernate'
+        exclude group: 'net.kyori'
+    }
+    implementation ('com.guflimc.cloud:cloud-minestom:+') {
+        exclude group: 'cloud.commandframework'
+    }
 }
 
 
 minestomExtension {
-    name = rootProject.name
     entrypoint = "com.guflimc.brick.holograms.minestom.MinestomBrickHolograms"
     dependencies = ["BrickI18n", "BrickPlaceholders", "BrickWorlds"] // TODO softdepend
 }
@@ -48,6 +59,6 @@ shadowJar.doLast {
     }
 }
 
-//
-//println project.configurations.runtimeClasspath.getResolvedConfiguration().getLenientConfiguration()
-//        .getArtifacts().stream().map(art -> art.moduleVersion.id).toList()
+
+println project.configurations.runtimeClasspath.getResolvedConfiguration().getLenientConfiguration()
+        .getArtifacts().stream().map(art -> art.moduleVersion.id).toList()

@@ -5,14 +5,19 @@ plugins {
 dependencies {
     api project(':api')
 
-    compileOnly 'com.guflimc.brick.i18n:minestom-api:+'
-    compileOnly 'net.kyori:adventure-text-minimessage:4.+'
+    // provided by extension
+    compileOnly 'com.guflimc.brick.i18n:api:+'
 
-    implementation 'net.kyori:adventure-text-serializer-gson:+'
-    implementation 'com.google.code.gson:gson:+'
-    implementation 'org.hibernate:hibernate-core:+'
+    // LIBRARIES
 
+    // commands
+    implementation 'net.kyori:adventure-text-minimessage:4.+'
     implementation 'cloud.commandframework:cloud-core:+'
     implementation 'cloud.commandframework:cloud-annotations:+'
 
+    // serialization
+    implementation 'com.google.code.gson:gson:+'
+
+    // database
+    api 'com.guflimc.brick.orm:common:+'
 }

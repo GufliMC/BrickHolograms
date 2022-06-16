@@ -1,7 +1,7 @@
 package com.guflimc.brick.holograms.minestom;
 
 import com.guflimc.brick.holograms.api.domain.Hologram;
-import com.guflimc.brick.holograms.common.BrickDatabaseContext;
+import com.guflimc.brick.holograms.common.BrickHologramsDatabaseContext;
 import com.guflimc.brick.holograms.common.domain.DHologram;
 import com.guflimc.brick.holograms.minestom.api.MinestomHologramManager;
 import com.guflimc.brick.holograms.minestom.api.domain.MinestomHologram;
@@ -16,6 +16,8 @@ import jakarta.persistence.criteria.Root;
 import net.minestom.server.MinecraftServer;
 import net.minestom.server.timer.TaskSchedule;
 import org.jetbrains.annotations.NotNull;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.util.Collection;
 import java.util.Collections;
@@ -26,45 +28,57 @@ import java.util.concurrent.CopyOnWriteArraySet;
 
 public class MinestomBrickHologramManager implements MinestomHologramManager {
 
-    private final BrickDatabaseContext databaseContext;
+    private final Logger logger = LoggerFactory.getLogger(MinestomBrickHologramManager.class);
+
+    private final BrickHologramsDatabaseContext databaseContext;
 
     private final Set<MinestomBrickHologram> holograms = new CopyOnWriteArraySet<>();
 
-    public MinestomBrickHologramManager(BrickDatabaseContext databaseContext) {
+    public MinestomBrickHologramManager(BrickHologramsDatabaseContext databaseContext) {
         this.databaseContext = databaseContext;
 
-        databaseContext.queryBuilder((session, cb) -> {
-
-            CriteriaQuery<DHologram> creatureQuery = cb.createQuery(DHologram.class);
-            Root<DHologram> creatureRoot = creatureQuery.from(DHologram.class);
-            creatureQuery = creatureQuery.select(creatureRoot);
-
-            TypedQuery<DHologram> creatureAllQuery = session.createQuery(creatureQuery);
-            creatureAllQuery.getResultList().stream()
-                    .map(MinestomBrickHologram::new)
-                    .forEach(holograms::add);
-        });
-
+        // hologram tick lifecycle
         MinecraftServer.getSchedulerManager().scheduleTask(() -> holograms.forEach(MinestomBrickHologram::tick),
                 TaskSchedule.tick(1), TaskSchedule.tick(1));
 
+        // spawn holograms that are assigned to a world when a world is loaded
         if (MinecraftServer.getExtensionManager().hasExtension("brickworlds")) {
-            MinestomWorldAPI.get().loadedWorlds().forEach(this::load);
             MinecraftServer.getGlobalEventHandler().addListener(WorldLoadEvent.class, e -> load(e.world()));
         }
+
+        reload();
     }
 
     private void load(World world) {
-        System.out.println("Loading holograms for world '" + world.info().name() + "'");
+        logger.info("Loading holograms for world '{}'.", world.info().name());
         holograms.stream().filter(h -> h.instance() == null)
                 .filter(h -> h.domainHologram().worldName() != null)
                 .filter(h -> h.domainHologram().worldName().equals(world.info().name()))
                 .forEach(h -> {
                     h.setInstance(((MinestomWorld) world).asInstance());
-                    System.out.println("Loaded hologram '" + h.name() + "'");
                 });
     }
 
+    @Override
+    public void reload() {
+        // load holograms from database
+        databaseContext.findAllAsync(DHologram.class).join().stream()
+                .map(MinestomBrickHologram::new)
+                .forEach(holo -> {
+                    // remove old one with same id
+                    holograms.stream().filter(h -> h.id().equals(holo.id())).toList().forEach(h -> {
+                        h.remove();
+                        holograms.remove(h);
+                    });
+
+                    holograms.add(holo);
+                });
+
+        // set instance of holograms that are assigned to a world
+        if (MinecraftServer.getExtensionManager().hasExtension("brickworlds")) {
+            MinestomWorldAPI.get().loadedWorlds().forEach(this::load);
+        }
+    }
 
     @Override
     public Collection<MinestomHologram> holograms() {
@@ -109,7 +123,8 @@ public class MinestomBrickHologramManager implements MinestomHologramManager {
 
     @Override
     public CompletableFuture<Void> merge(@NotNull Hologram hologram) {
-        return databaseContext.mergeAsync(((MinestomBrickHologram) hologram).domainHologram());
+        MinestomBrickHologram bholo = (MinestomBrickHologram) hologram;
+        return databaseContext.mergeAsync(bholo.domainHologram()).thenAccept(bholo::setDomainHologram);
     }
 
 }

@@ -1,14 +1,6 @@
-//pluginManagement {
-//    repositories {
-//        gradlePluginPortal()
-//        maven { url "https://repo.jorisg.com/snapshots" }
-//    }
-//}
-
 rootProject.name = 'BrickHolograms'
 
 include 'api'
 include 'common'
 include 'minestom'
 include 'minestom-api'
-

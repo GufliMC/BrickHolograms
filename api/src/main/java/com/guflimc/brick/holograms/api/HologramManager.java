@@ -9,6 +9,8 @@ import java.util.concurrent.CompletableFuture;
 
 public interface HologramManager<T extends Hologram> {
 
+    void reload();
+
     Collection<T> holograms();
 
     Optional<T> find(String name);
@@ -16,7 +18,6 @@ public interface HologramManager<T extends Hologram> {
     Hologram create();
 
     Hologram create(@NotNull String name);
-
 
     CompletableFuture<Void> persist(@NotNull Hologram hologram);
 

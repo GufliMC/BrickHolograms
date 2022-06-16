@@ -11,5 +11,5 @@ dependencies {
     api project(':api')
 
     // provided by platform
-    compileOnly 'com.github.Minestom:Minestom:f80f653ee0'
+    compileOnly 'com.github.Minestom:Minestom:-SNAPSHOT'
 }

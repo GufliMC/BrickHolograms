@@ -7,6 +7,7 @@ import com.guflimc.brick.holograms.api.domain.Hologram;
 import com.guflimc.brick.holograms.api.meta.Position;
 import com.guflimc.brick.holograms.minestom.MinestomBrickHologramManager;
 import com.guflimc.brick.holograms.minestom.api.domain.MinestomHologram;
+import com.guflimc.brick.holograms.minestom.domain.MinestomBrickHologram;
 import com.guflimc.brick.i18n.api.I18nAPI;
 import net.minestom.server.entity.Player;
 
@@ -28,15 +29,39 @@ public class MinestomHologramCommands {
 
         manager.persist(hologram);
 
-        I18nAPI.get(this).send(sender, "cmd.hologram.create", name);
+        I18nAPI.get(this).send(sender, "cmd.create", name);
     }
 
     @CommandMethod("bh tphere <hologram>")
     public void tphere(Player sender, @Argument(value = "hologram") Hologram hologram) {
-        hologram.setPosition(new Position(sender.getPosition().x(), sender.getPosition().y(), sender.getPosition().z()));
+        MinestomHologram mholo = (MinestomHologram) hologram;
+
+        mholo.setInstance(sender.getInstance());
+        mholo.setPosition(new Position(sender.getPosition().x(), sender.getPosition().y(), sender.getPosition().z()));
+
         manager.merge(hologram);
 
-        I18nAPI.get(this).send(sender, "cmd.hologram.tphere", hologram.name());
+        I18nAPI.get(this).send(sender, "cmd.tphere", hologram.name());
+    }
+
+    @CommandMethod("bh setitem <hologram>")
+    public void setitem(Player sender, @Argument(value = "hologram") Hologram hologram) {
+        MinestomHologram mholo = (MinestomHologram) hologram;
+        mholo.setItem(sender.getItemInMainHand());
+
+        manager.merge(hologram);
+
+        I18nAPI.get(this).send(sender, "cmd.setitem", hologram.name(), sender.getItemInMainHand().material().name());
+    }
+
+    @CommandMethod("bh unsetitem <hologram>")
+    public void unsetitem(Player sender, @Argument(value = "hologram") Hologram hologram) {
+        MinestomHologram mholo = (MinestomHologram) hologram;
+        mholo.unsetItem();
+
+        manager.merge(hologram);
+
+        I18nAPI.get(this).send(sender, "cmd.unsetitem", hologram.name());
     }
 
 }

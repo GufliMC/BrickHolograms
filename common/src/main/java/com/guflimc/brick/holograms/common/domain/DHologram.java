@@ -38,7 +38,8 @@ public class DHologram implements Hologram {
             cascade = { CascadeType.PERSIST, CascadeType.MERGE, CascadeType.REMOVE })
     private List<DHologramLine> lines = new ArrayList<>();
 
-    private String itemNBT;
+    @Column(name = "item_serialized")
+    private String itemSerialized;
 
     //
 
@@ -104,4 +105,11 @@ public class DHologram implements Hologram {
         lines.remove(index);
     }
 
+    public void setItemSerialized(String itemSerialized) {
+        this.itemSerialized = itemSerialized;
+    }
+
+    public String itemSerialized() {
+        return itemSerialized;
+    }
 }

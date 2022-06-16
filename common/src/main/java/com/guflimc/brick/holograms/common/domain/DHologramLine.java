@@ -1,6 +1,6 @@
 package com.guflimc.brick.holograms.common.domain;
 
-import com.guflimc.brick.holograms.common.converters.ComponentConverter;
+import com.guflimc.brick.orm.converters.ComponentConverter;
 import jakarta.persistence.*;
 import net.kyori.adventure.text.Component;
 
@@ -26,6 +26,10 @@ public class DHologramLine {
     public DHologramLine(DHologram hologram, Component text) {
         this.hologram = hologram;
         this.text = text;
+    }
+
+    public int id() {
+        return id;
     }
 
     public Component text() {

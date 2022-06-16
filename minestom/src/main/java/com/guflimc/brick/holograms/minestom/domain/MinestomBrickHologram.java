@@ -8,31 +8,47 @@ import com.guflimc.brick.worlds.api.world.World;
 import net.kyori.adventure.text.Component;
 import net.minestom.server.MinecraftServer;
 import net.minestom.server.coordinate.Pos;
+import net.minestom.server.entity.Entity;
+import net.minestom.server.entity.ItemEntity;
 import net.minestom.server.entity.Player;
 import net.minestom.server.entity.hologram.Hologram;
+import net.minestom.server.event.Event;
 import net.minestom.server.event.EventFilter;
 import net.minestom.server.event.EventNode;
+import net.minestom.server.event.item.PickupItemEvent;
+import net.minestom.server.event.player.PlayerDisconnectEvent;
 import net.minestom.server.event.player.PlayerSpawnEvent;
-import net.minestom.server.event.trait.PlayerEvent;
 import net.minestom.server.instance.Instance;
 import net.minestom.server.instance.SharedInstance;
+import net.minestom.server.item.ItemStack;
 import org.apache.commons.lang3.RandomStringUtils;
 import org.jetbrains.annotations.NotNull;
+import org.jglrxavpok.hephaistos.nbt.NBTCompound;
+import org.jglrxavpok.hephaistos.nbt.NBTException;
+import org.jglrxavpok.hephaistos.parser.SNBTParser;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
+import java.io.StringReader;
 import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
 
 public class MinestomBrickHologram implements MinestomHologram {
 
-    private final DHologram domainHologram;
+    private final Logger logger = LoggerFactory.getLogger(MinestomBrickHologram.class);
+
+    private DHologram domainHologram;
 
     // entity code
 
-    private Instance instance;
-    private final Map<Player, PlayerMultiLineHologram> playerHolograms = new ConcurrentHashMap<>();
-    private final EventNode<PlayerEvent> eventNode = EventNode.type(RandomStringUtils.randomAlphanumeric(16), EventFilter.PLAYER);
+    private final EventNode<Event> eventNode = EventNode.type(RandomStringUtils.randomAlphanumeric(16), EventFilter.ALL);
 
-    public MinestomBrickHologram(DHologram domainHologram) {
+    private Instance instance;
+
+    private final Map<Player, PlayerMultiLineHologram> playerHolograms = new ConcurrentHashMap<>();
+    private Entity itemEntity;
+
+    public MinestomBrickHologram(@NotNull DHologram domainHologram) {
         this.domainHologram = domainHologram;
 
         // show hologram to players when they spawn in the set instance
@@ -41,27 +57,56 @@ public class MinestomBrickHologram implements MinestomHologram {
                 return;
             }
 
-            refresh(event.getPlayer());
+            playerHolograms.put(event.getPlayer(), new PlayerMultiLineHologram(event.getPlayer(), this));
+        });
+
+        // cleanup on player quit
+        eventNode.addListener(PlayerDisconnectEvent.class, event -> {
+            if ( playerHolograms.containsKey(event.getPlayer()) ) {
+                playerHolograms.get(event.getPlayer()).remove();
+                playerHolograms.remove(event.getPlayer());
+            }
+        });
+
+        // do not allow item pickup
+        eventNode.addListener(PickupItemEvent.class, e -> {
+            if ( e.getItemEntity().equals(itemEntity) ) {
+                e.setCancelled(true);
+            }
         });
     }
 
     //
 
-    private void refresh(Player player) {
-        if (playerHolograms.containsKey(player)) {
-            playerHolograms.get(player).remove();
+    private void refresh() {
+        // remove old
+        clear();
+
+        // spawn item entity
+        if ( domainHologram.itemSerialized() != null ) {
+            try {
+                ItemStack itemStack = ItemStack.fromItemNBT((NBTCompound) new SNBTParser(new StringReader(domainHologram.itemSerialized())).parse());
+                itemEntity = new ItemEntity(itemStack);
+                itemEntity.setNoGravity(true);
+                itemEntity.setInstance(instance, new Pos(domainHologram.position().x(), domainHologram.position().y(), domainHologram.position().z()));
+            } catch (NBTException e) {
+                logger.warn("Failed to parse item nbt for hologram '{}'", domainHologram.name() == null ? domainHologram.id().toString() : domainHologram.name());
+            }
         }
 
-        playerHolograms.put(player, new PlayerMultiLineHologram(player, this));
+        // update for all players in this instance
+        MinecraftServer.getConnectionManager().getOnlinePlayers().stream()
+                .filter(p -> p.getInstance() == instance)
+                .forEach(p -> playerHolograms.put(p, new PlayerMultiLineHologram(p, this)));
     }
 
-    private void refresh() {
-        if (instance == null) {
-            return;
+    private void clear() {
+        playerHolograms.values().forEach(PlayerMultiLineHologram::remove);
+        playerHolograms.clear();
+
+        if ( itemEntity != null ) {
+            itemEntity.remove();
         }
-
-        playerHolograms.keySet().forEach(this::refresh);
-
     }
 
     //
@@ -74,15 +119,15 @@ public class MinestomBrickHologram implements MinestomHologram {
         return domainHologram;
     }
 
+    public void setDomainHologram(@NotNull DHologram domainHologram) {
+        this.domainHologram = domainHologram;
+    }
+
     @Override
     public void setInstance(@NotNull Instance instance) {
-        remove();
-
-        this.instance = instance;
-
-        MinecraftServer.getConnectionManager().getOnlinePlayers().stream()
-                .filter(p -> instance == p.getInstance())
-                .forEach(this::refresh);
+        if ( instance == this.instance ) {
+            return;
+        }
 
         if (MinecraftServer.getExtensionManager().hasExtension("brickworlds")) {
             if (instance instanceof World w) {
@@ -92,9 +137,10 @@ public class MinestomBrickHologram implements MinestomHologram {
             }
         }
 
-        System.out.println("a");
+        this.instance = instance;
+        refresh();
+
         MinecraftServer.getGlobalEventHandler().addChild(eventNode);
-        System.out.println("b");
     }
 
     @Override
@@ -105,9 +151,19 @@ public class MinestomBrickHologram implements MinestomHologram {
     @Override
     public void remove() {
         MinecraftServer.getGlobalEventHandler().removeChild(eventNode);
+        clear();
+    }
 
-        playerHolograms.values().forEach(PlayerMultiLineHologram::remove);
-        playerHolograms.clear();
+    @Override
+    public void setItem(@NotNull ItemStack itemStack) {
+        domainHologram.setItemSerialized(itemStack.toItemNBT().toSNBT());
+        refresh();
+    }
+
+    @Override
+    public void unsetItem() {
+        domainHologram.setItemSerialized(null);
+        refresh();
     }
 
     // PROXY
@@ -174,6 +230,10 @@ public class MinestomBrickHologram implements MinestomHologram {
 
             // spawn holograms
             Pos pos = new Pos(parent.position().x(), parent.position().y(), parent.position().z());
+            if ( parent.itemEntity != null ) {
+                pos = pos.add(0, 0.5, 0); // item height
+            }
+
             List<Component> lines = parent.lines();
             for (int i = lines.size() - 1; i >= 0; i--) {
                 armorStands.add(new Hologram(parent.instance, pos, lines.get(i)));
