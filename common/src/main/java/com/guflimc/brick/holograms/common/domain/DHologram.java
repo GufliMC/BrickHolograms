@@ -34,7 +34,8 @@ public class DHologram implements Hologram {
     @Column(nullable = true)
     private String worldName;
 
-    @OneToMany(targetEntity = DHologramLine.class, mappedBy = "hologram", fetch = FetchType.EAGER,
+    @OneToMany(targetEntity = DHologramLine.class, mappedBy = "hologram",
+            orphanRemoval = true, fetch = FetchType.EAGER,
             cascade = { CascadeType.PERSIST, CascadeType.MERGE, CascadeType.REMOVE })
     private List<DHologramLine> lines = new ArrayList<>();
 
