@@ -4,4 +4,5 @@ plugins {
 
 dependencies {
     api 'net.kyori:adventure-api:4.+'
+    api 'com.guflimc.brick.maths:api:+'
 }

@@ -1,6 +1,6 @@
 package com.guflimc.brick.holograms.api.domain;
 
-import com.guflimc.brick.holograms.api.meta.Position;
+import com.guflimc.brick.maths.api.geo.Location;
 import net.kyori.adventure.text.Component;
 
 import java.util.Collection;
@@ -13,9 +13,9 @@ public interface Hologram {
 
     String name();
 
-    Position position();
+    Location location();
 
-    void setPosition(Position position);
+    void setLocation(Location position);
 
     List<Component> lines();
 

@@ -31,40 +31,6 @@ public final class HologramArgument<C> extends CommandArgument<C, Hologram> {
         super(required, name, new HologramParser<>(), defaultValue, Hologram.class, suggestionsProvider);
     }
 
-    public static <C> Builder<C> newBuilder(final @NotNull String name) {
-        return new Builder<>(name);
-    }
-
-    public static <C> CommandArgument<C, Hologram> of(final @NotNull String name) {
-        return HologramArgument.<C>newBuilder(name).asRequired().build();
-    }
-
-    public static <C> CommandArgument<C, Hologram> optional(final @NotNull String name) {
-        return HologramArgument.<C>newBuilder(name).asOptional().build();
-    }
-
-    public static <C> CommandArgument<C, Hologram> optional(
-            final @NotNull String name,
-            final @NotNull String defaultHologram
-    ) {
-        return HologramArgument.<C>newBuilder(name).asOptionalWithDefault(defaultHologram).build();
-    }
-
-
-    public static final class Builder<C> extends CommandArgument.Builder<C, Hologram> {
-
-        private Builder(final @NotNull String name) {
-            super(Hologram.class, name);
-        }
-
-        @Override
-        public @NotNull HologramArgument<C> build() {
-            return new HologramArgument<>(this.isRequired(), this.getName(), this.getDefaultValue(), this.getSuggestionsProvider());
-        }
-
-    }
-
-
     public static final class HologramParser<C> implements ArgumentParser<C, Hologram> {
 
         @Override
@@ -104,7 +70,6 @@ public final class HologramArgument<C> extends CommandArgument<C, Hologram> {
         }
 
     }
-
 
     public static final class HologramParseException extends ParserException {
 

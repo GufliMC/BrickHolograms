@@ -1,8 +1,8 @@
 package com.guflimc.brick.holograms.common.domain;
 
 import com.guflimc.brick.holograms.api.domain.Hologram;
-import com.guflimc.brick.holograms.api.meta.Position;
-import com.guflimc.brick.holograms.common.converters.PositionConverter;
+import com.guflimc.brick.maths.api.geo.Location;
+import com.guflimc.brick.maths.database.api.LocationConverter;
 import jakarta.persistence.*;
 import net.kyori.adventure.text.Component;
 import org.hibernate.annotations.JdbcTypeCode;
@@ -12,7 +12,6 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
 import java.util.UUID;
-import java.util.function.Consumer;
 import java.util.stream.Collectors;
 
 @Entity
@@ -27,16 +26,14 @@ public class DHologram implements Hologram {
     @Column(nullable = false)
     private String name;
 
-    @Convert(converter = PositionConverter.class)
+    @Convert(converter = LocationConverter.class)
     @Column(nullable = false)
-    private Position position;
-
-    @Column(nullable = true)
-    private String worldName;
+    private Location location = new Location(null, 0, 0, 0, 0, 0);
 
     @OneToMany(targetEntity = DHologramLine.class, mappedBy = "hologram",
             orphanRemoval = true, fetch = FetchType.EAGER,
-            cascade = { CascadeType.PERSIST, CascadeType.MERGE, CascadeType.REMOVE })
+            cascade = {CascadeType.PERSIST, CascadeType.MERGE, CascadeType.REMOVE})
+    @OrderColumn(name = "line_index")
     private List<DHologramLine> lines = new ArrayList<>();
 
     @Column(name = "item_serialized")
@@ -62,21 +59,13 @@ public class DHologram implements Hologram {
     }
 
     @Override
-    public Position position() {
-        return position;
+    public Location location() {
+        return location;
     }
 
     @Override
-    public void setPosition(Position position) {
-        this.position = position;
-    }
-
-    public String worldName() {
-        return worldName;
-    }
-
-    public void setWorldName(String worldName) {
-        this.worldName = worldName;
+    public void setLocation(Location location) {
+        this.location = location;
     }
 
     @Override

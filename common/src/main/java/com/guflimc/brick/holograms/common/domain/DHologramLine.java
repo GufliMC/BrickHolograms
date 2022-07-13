@@ -22,6 +22,7 @@ public class DHologramLine {
     @Column(nullable = false)
     private Component text;
 
+
     //
 
     private DHologramLine() {

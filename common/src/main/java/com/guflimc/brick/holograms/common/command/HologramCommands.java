@@ -3,6 +3,9 @@ package com.guflimc.brick.holograms.common.command;
 import cloud.commandframework.annotations.Argument;
 import cloud.commandframework.annotations.CommandMethod;
 import cloud.commandframework.annotations.processing.CommandContainer;
+import cloud.commandframework.annotations.specifier.Greedy;
+import cloud.commandframework.annotations.suggestions.Suggestions;
+import cloud.commandframework.context.CommandContext;
 import com.guflimc.brick.holograms.api.HologramManager;
 import com.guflimc.brick.holograms.api.domain.Hologram;
 import com.guflimc.brick.i18n.api.I18nAPI;
@@ -10,7 +13,9 @@ import net.kyori.adventure.audience.Audience;
 import net.kyori.adventure.text.Component;
 import net.kyori.adventure.text.minimessage.MiniMessage;
 
+import java.util.List;
 import java.util.Objects;
+import java.util.stream.IntStream;
 
 @CommandContainer
 public class HologramCommands {
@@ -21,15 +26,12 @@ public class HologramCommands {
         this.manager = manager;
     }
 
-    /*
-    // TODO waiting for PR in cloud to implement this
-    @Suggestions("index")
-    public List<String> indexSuggestion(CommandContext<Audience> sender, CommandContext<Audience> ctx) {
-        Hologram holo = ctx.getOrDefault("hologram", null);
-        if ( holo == null ) return null;
-        return IntStream.range(0, holo.lines().size()).boxed().map(Object::toString).toList();
-    }
-     */
+//    @Suggestions("index")
+//    public List<String> indexSuggestion(CommandContext<Audience> sender, CommandContext<Audience> ctx) {
+//        Hologram holo = ctx.getOrDefault("hologram", null);
+//        if ( holo == null ) return null;
+//        return IntStream.range(0, holo.lines().size()).boxed().map(Object::toString).toList();
+//    }
 
     @CommandMethod("bh reload")
     public void reload(Audience sender) {
@@ -54,7 +56,7 @@ public class HologramCommands {
     @CommandMethod("bh addline <hologram> <line>")
     public void addline(Audience sender,
                         @Argument(value = "hologram") Hologram hologram,
-                        @Argument(value = "line") String line) {
+                        @Argument(value = "line") @Greedy String line) {
         Component text = MiniMessage.miniMessage().deserialize(line);
         hologram.addLine(text);
         manager.merge(hologram);
@@ -66,7 +68,7 @@ public class HologramCommands {
     public void setline(Audience sender,
                         @Argument(value = "hologram") Hologram hologram,
                         @Argument(value = "index"/*, suggestions = "index"*/) int index,
-                        @Argument(value = "line") String line) {
+                        @Argument(value = "line") @Greedy String line) {
         if ( index  < 0 || index >= hologram.lines().size() ) {
             I18nAPI.get(this).send(sender, "cmd.error.args.index", index);
             return;
